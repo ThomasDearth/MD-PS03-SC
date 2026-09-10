@@ -1,6 +1,6 @@
 ---
 title: "Problem Set 03: Data Wrangling"
-author: "Your Name"
+author: "Thomas Dearth"
 date: last-modified
 date-format: "[Last modified on] MMMM DD, YYYY HH:mm:ss zzz"
 format: 
@@ -59,10 +59,11 @@ Examine `txhousing` in the data viewer. You can accomplish this two different wa
 ::: {.callout-important icon="false" collapse="false" title="Problem 1 Answers"}
 ```{r}
 # Type your code and comments inside the code chunk
-
+txhousing %>%
+  tail(n=1)
 ```
 
--   Delete this and put your text answer here.
+-   The last city displayed in txhousing is **`r tail(txhousing, 1)$city`**.
 :::
 
 ::: {.callout-note icon="false" title="Problem 2"}
@@ -70,7 +71,7 @@ Examine the variable descriptions by typing `?txhousing` in the **console**. Wha
 :::
 
 ::: {.callout-important icon="false" collapse="false" title="Problem 2 Answers"}
--   Delete this and put your text answer here.
+-   This represents the number of listings in the city at that time.
 :::
 
 # Data Wrangling Review
@@ -241,7 +242,11 @@ Write a code chunk to remove the inventory variable. Save the results in a data 
 ::: {.callout-important icon="false" collapse="false" title="Problem 3 Answers"}
 ```{r}
 # Type your code and comments inside the code chunk
+txhousing <- txhousing %>%
+  select(-"inventory")
 
+glimpse(txhousing)
+ifelse(sum("inventory" %in% c(names(txhousing))) == 0, "Variable removed", "Variable not removed")
 ```
 :::
 
@@ -255,8 +260,11 @@ txhousing |>
 
 ::: {.callout-important icon="false" collapse="false" title="Problem 4 Answers"}
 ```{r}
-# Type your code and comments inside the code chunk
+dallas_sub <- txhousing |>
+    filter(city=="Dallas" & (year == 2012 | year == 2013))
+dallas_sub
 
+"Due to the order of operator precedence, the example provided provides either (housing which is in Dallas an in 2012) or (any housing which was in 2013). AND operators occur before OR ones."
 ```
 :::
 
@@ -266,8 +274,8 @@ Add a column to the `dallas_sub` data set called `prct_sold` that calculates the
 
 ::: {.callout-important icon="false" collapse="false" title="Problem 5 Answers"}
 ```{r}
-# Type your code and comments inside the code chunk
-
+dallas_sub |> mutate(prct_sold = (sales/listings * 100)) -> dallas_sub
+head(dallas_sub, 6)
 ```
 :::
 
@@ -277,8 +285,13 @@ Calculate the **average** percentage of listings that were sold in Dallas **in e
 
 ::: {.callout-important icon="false" collapse="false" title="Problem 6 Answers"}
 ```{r}
-# Type your code and comments inside the code chunk
+# determine the mean percentage of sales in each month
+dallas_sub |>
+  group_by(month) |>
+  summarize(mean_prct_sold = mean(prct_sold)) -> dallas_summary
 
+# display dallas_summary
+dallas_summary
 ```
 :::
 
@@ -288,8 +301,7 @@ Arrange the `dallas_summary` in `desc`ending order based on the average percenta
 
 ::: {.callout-important icon="false" collapse="false" title="Problem 7 Answers"}
 ```{r}
-# Type your code and comments inside the code chunk
-
+dallas_summary |> arrange(desc(mean_prct_sold))
 ```
 :::
 
@@ -312,7 +324,7 @@ txhousing |>
   kable()
 ```
 
--   Delete this and put your text answer here.
+-   This code chunk does the same computations as problems four through seven in a single line of executable R code. It pipes txhousing though consecutive dplyr operations to do this. First, it filters the data frame for only rows which are in years 2012 or 2013 and are in Dallas, then uses mutate to create a prct_sold column reflecting the percent of listings in each record which were sold. This is then piped into group_by to separate results by month, followed by arranging them in descending order and using `kable()` to display them in a nice table.
 :::
 
 ::: {.callout-note icon="false" title="Problem 9"}
@@ -321,11 +333,15 @@ In January of 2015, what city had the fewest houses listed for sale? Report the 
 
 ::: {.callout-important icon="false" collapse="false" title="Problem 9 Answers"}
 ```{r}
-# Type your code and comments inside the code chunk
+txhousing |>
+  filter(year==2015, month==1) |>
+  group_by(city) |>
+  arrange(listings) -> txhousing_by_listing
 
+txhousing_by_listing
 ```
 
--   Delete this and put your text answer here.
+-   The city of `{r} head(txhousing_by_listing, 1)$city` had the fewest listings, with only `{r} head(txhousing_by_listing, 1)$listings` listings.
 :::
 
 ::: {.callout-note icon="false" title="Problem 10"}
@@ -334,11 +350,16 @@ In 2012, in which month were the most houses sold in Texas? Report the month wer
 
 ::: {.callout-important icon="false" collapse="false" title="Problem 10 Answers"}
 ```{r}
-# Type your code and comments inside the code chunk
+txhousing |>
+  filter(year == 2012) |>
+  group_by(month) |>
+  summarize(total_sales = sum(sales)) |>
+  arrange(desc(total_sales)) -> sales_2012
 
+sales_2012
 ```
 
--   Delete this and put your text answer here.
+-   In 2012, the most Texan houses were sold during month `{r} head(sales_2012, 1)$month`. In that month, `{r} head(sales_2012, 1)$total_sales` houses were sold.
 :::
 
 ::: {.callout-note icon="false" title="Problem 11"}
